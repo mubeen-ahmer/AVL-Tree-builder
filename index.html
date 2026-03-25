@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AVL Tree Construction</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .input-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        input[type="text"] {
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            width: 400px;
+            max-width: 100%;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .build-btn {
+            padding: 12px 30px;
+            font-size: 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .build-btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .sequence {
+            text-align: center;
+            font-size: 16px;
+            color: #666;
+            margin-top: 10px;
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        button {
+            padding: 12px 30px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        #prevBtn {
+            background: #e74c3c;
+            color: white;
+        }
+        #nextBtn {
+            background: #2ecc71;
+            color: white;
+        }
+        #resetBtn {
+            background: #95a5a6;
+            color: white;
+        }
+        button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .step-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+        .step-title {
+            font-weight: bold;
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .step-desc {
+            color: #666;
+            margin-bottom: 10px;
+        }
+        .rotation-info {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        #canvas {
+            display: block;
+            margin: 0 auto;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            background: white;
+        }
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .legend-box {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px solid #333;
+        }
+        .new-node { background: #ff6b6b; }
+        .balanced { background: #51cf66; }
+        .error {
+            color: #e74c3c;
+            text-align: center;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AVL Tree Builder</h1>
+        
+        <div class="input-section">
+            <div class="input-group">
+                <input type="text" id="arrayInput" placeholder="Enter numbers separated by commas (e.g., 40, 20, 10, 25, 30)" value="40, 20, 10">
+                <button class="build-btn" onclick="buildTree()">Build Tree</button>
+            </div>
+            <div class="sequence" id="sequence"></div>
+            <div class="error" id="error"></div>
+        </div>
+        
+        <div class="controls">
+            <button id="prevBtn" onclick="prevStep()">← Previous</button>
+            <button id="resetBtn" onclick="reset()">Reset</button>
+            <button id="nextBtn" onclick="nextStep()">Next →</button>
+        </div>
+        
+        <div class="step-info" id="stepInfo"></div>
+        
+        <canvas id="canvas" width="1000" height="500"></canvas>
+        
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-box new-node"></div>
+                <span>Newly inserted node</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box balanced"></div>
+                <span>Balanced nodes</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        let currentStep = 0;
+        let steps = [];
+        
+        class AVLNode {
+            constructor(val) {
+                this.val = val;
+                this.left = null;
+                this.right = null;
+                this.height = 1;
+            }
+        }
+        
+        function getHeight(node) {
+            return node ? node.height : 0;
+        }
+        
+        function getBalance(node) {
+            return node ? getHeight(node.left) - getHeight(node.right) : 0;
+        }
+        
+        function updateHeight(node) {
+            if (node) {
+                node.height = 1 + Math.max(getHeight(node.left), getHeight(node.right));
+            }
+        }
+        
+        function rightRotate(y) {
+            const x = y.left;
+            const T2 = x.right;
+            
+            x.right = y;
+            y.left = T2;
+            
+            updateHeight(y);
+            updateHeight(x);
+            
+            return x;
+        }
+        
+        function leftRotate(x) {
+            const y = x.right;
+            const T2 = y.left;
+            
+            y.left = x;
+            x.right = T2;
+            
+            updateHeight(x);
+            updateHeight(y);
+            
+            return y;
+        }
+        
+        function insert(node, val, isNewNode) {
+            if (!node) {
+                const newNode = new AVLNode(val);
+                if (isNewNode) newNode.isNew = true;
+                return newNode;
+            }
+            
+            if (val < node.val) {
+                node.left = insert(node.left, val, isNewNode);
+            } else if (val > node.val) {
+                node.right = insert(node.right, val, isNewNode);
+            } else {
+                return node;
+            }
+            
+            updateHeight(node);
+            const balance = getBalance(node);
+            
+            // LL Case
+            if (balance > 1 && val < node.left.val) {
+                return rightRotate(node);
+            }
+            
+            // RR Case
+            if (balance < -1 && val > node.right.val) {
+                return leftRotate(node);
+            }
+            
+            // LR Case
+            if (balance > 1 && val > node.left.val) {
+                node.left = leftRotate(node.left);
+                return rightRotate(node);
+            }
+            
+            // RL Case
+            if (balance < -1 && val < node.right.val) {
+                node.right = rightRotate(node.right);
+                return leftRotate(node);
+            }
+            
+            return node;
+        }
+        
+        function cloneTree(node) {
+            if (!node) return null;
+            const clone = new AVLNode(node.val);
+            clone.height = node.height;
+            clone.left = cloneTree(node.left);
+            clone.right = cloneTree(node.right);
+            if (node.isNew) clone.isNew = true;
+            return clone;
+        }
+        
+        function getRotationType(beforeTree, afterTree, val) {
+            // Simple heuristic to detect rotation type
+            if (!beforeTree || !afterTree) return "";
+            
+            const beforeBal = getBalance(beforeTree);
+            const afterBal = getBalance(afterTree);
+            
+            if (Math.abs(beforeBal) > 1) {
+                if (beforeBal > 1) {
+                    // Left heavy
+                    if (val < beforeTree.left.val) {
+                        return "Right Rotation (LL Case)";
+                    } else {
+                        return "Left-Right Rotation (LR Case)";
+                    }
+                } else {
+                    // Right heavy
+                    if (val > beforeTree.right.val) {
+                        return "Left Rotation (RR Case)";
+                    } else {
+                        return "Right-Left Rotation (RL Case)";
+                    }
+                }
+            }
+            return "";
+        }
+        
+        function buildTree() {
+            const input = document.getElementById('arrayInput').value;
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = '';
+            
+            const values = input.split(',').map(v => v.trim()).filter(v => v !== '');
+            const numbers = values.map(v => parseInt(v)).filter(n => !isNaN(n));
+            
+            if (numbers.length === 0) {
+                errorDiv.textContent = 'Please enter valid numbers!';
+                return;
+            }
+            
+            // Remove duplicates
+            const uniqueNumbers = [...new Set(numbers)];
+            
+            document.getElementById('sequence').textContent = `Sequence: ${uniqueNumbers.join(', ')}`;
+            
+            steps = [{
+                title: "Initial: Empty Tree",
+                desc: "Starting with an empty AVL tree",
+                rotation: "",
+                tree: null
+            }];
+            
+            let root = null;
+            
+            for (let i = 0; i < uniqueNumbers.length; i++) {
+                const val = uniqueNumbers[i];
+                const beforeTree = cloneTree(root);
+                root = insert(root, val, true);
+                const afterTree = cloneTree(root);
+                
+                // Remove isNew flag from previous nodes
+                function clearNewFlags(node) {
+                    if (!node) return;
+                    if (node.isNew && node.val !== val) delete node.isNew;
+                    clearNewFlags(node.left);
+                    clearNewFlags(node.right);
+                }
+                clearNewFlags(afterTree);
+                
+                // Mark only the newly inserted node
+                function markNew(node, value) {
+                    if (!node) return;
+                    if (node.val === value) node.isNew = true;
+                    markNew(node.left, value);
+                    markNew(node.right, value);
+                }
+                markNew(afterTree, val);
+                
+                const rotation = getRotationType(beforeTree, afterTree, val);
+                
+                steps.push({
+                    title: `Step ${i + 1}: Insert ${val}`,
+                    desc: `Inserting ${val} into the tree${rotation ? '. Imbalance detected!' : '. Tree remains balanced.'}`,
+                    rotation: rotation,
+                    tree: afterTree
+                });
+            }
+            
+            currentStep = 0;
+            drawTree();
+        }
+        
+        function drawTree() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            if (steps.length === 0) {
+                ctx.fillStyle = '#999';
+                ctx.font = '20px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Enter an array and click "Build Tree" to start', canvas.width / 2, canvas.height / 2);
+                return;
+            }
+            
+            const step = steps[currentStep];
+            updateStepInfo(step);
+            
+            if (step.tree) {
+                drawNode(step.tree, canvas.width / 2, 50, 200);
+            }
+            
+            updateButtons();
+        }
+        
+        function drawNode(node, x, y, offset) {
+            if (!node) return;
+            
+            // Draw edges first
+            if (node.left) {
+                ctx.strokeStyle = '#555';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(x - offset, y + 80);
+                ctx.stroke();
+                drawNode(node.left, x - offset, y + 80, offset / 2);
+            }
+            
+            if (node.right) {
+                ctx.strokeStyle = '#555';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.lineTo(x + offset, y + 80);
+                ctx.stroke();
+                drawNode(node.right, x + offset, y + 80, offset / 2);
+            }
+            
+            // Draw node
+            ctx.fillStyle = node.isNew ? '#ff6b6b' : '#51cf66';
+            ctx.beginPath();
+            ctx.arc(x, y, 25, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            
+            // Draw value
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 18px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(node.val, x, y);
+            
+            // Draw balance factor
+            const balance = getBalance(node);
+            ctx.fillStyle = '#333';
+            ctx.font = '12px Arial';
+            ctx.fillText(`BF:${balance}`, x, y + 40);
+        }
+        
+        function updateStepInfo(step) {
+            const info = document.getElementById('stepInfo');
+            info.innerHTML = `
+                <div class="step-title">${step.title}</div>
+                <div class="step-desc">${step.desc}</div>
+                ${step.rotation ? `<div class="rotation-info">⚠️ ${step.rotation}</div>` : ''}
+            `;
+        }
+        
+        function updateButtons() {
+            document.getElementById('prevBtn').disabled = currentStep === 0;
+            document.getElementById('nextBtn').disabled = currentStep === steps.length - 1;
+        }
+        
+        function nextStep() {
+            if (currentStep < steps.length - 1) {
+                currentStep++;
+                drawTree();
+            }
+        }
+        
+        function prevStep() {
+            if (currentStep > 0) {
+                currentStep--;
+                drawTree();
+            }
+        }
+        
+        function reset() {
+            currentStep = 0;
+            drawTree();
+        }
+        
+        // Allow Enter key to build tree
+        document.getElementById('arrayInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                buildTree();
+            }
+        });
+        
+        // Initial build with default values
+        buildTree();
+    </script>
+</body>
+</html>
