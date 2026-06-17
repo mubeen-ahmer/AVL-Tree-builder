@@ -41,7 +41,7 @@ After implementing AVL trees from scratch in C++ for a Data Structures course, I
 ## Setup
 
 ```bash
-git clone https://github.com/yourusername/avl-visualizer.git
+git clone https://github.com/mubeen-ahmer/AVL-Tree-builder
 cd avl-visualizer
 ```
 
