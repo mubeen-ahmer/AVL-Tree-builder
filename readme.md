@@ -41,8 +41,8 @@ After implementing AVL trees from scratch in C++ for a Data Structures course, I
 ## Setup
 
 ```bash
-git clone https://github.com/mubeen-ahmer/AVL-Tree-builder
-cd avl-visualizer
+git clone https://github.com/mubeen-ahmer/AVL-Tree-builder.git
+cd AVL-Tree-builder
 ```
 
 No dependencies, no build step — it's a single static HTML file.
@@ -62,7 +62,7 @@ Enter a comma-separated list of numbers (e.g. `40, 20, 10, 25, 30`), click **Bui
 ## Project Structure
 
 ```
-avl-visualizer/
+AVL-Tree-builder/
 ├── assets/        # Screenshots and demo media for README
 ├── index.html     # Everything — markup, styles, and logic in one file
 └── README.md
